@@ -22,7 +22,7 @@ with open("data/worldcities.csv", 'r') as cities:
         lat = row["lat"]
         country = row["country"]
         pop = row["population"]
-        
+
         print("id = {}, name = {}, lng = {}, lat = {}".format(id, name, lng, lat))
         count += 1
 

@@ -16,26 +16,26 @@ app = Flask(__name__)
 
 # Helpers
 def isempty(input):
-	
+
 	result = False
 
 	# An argument is considered to be empty if any of the following condition matches
 	if str(input) == "None":
 		result = True
-	
+
 	if str(input) == "":
 		result = True
-	
+
 	return result
 
 # Routes
 @app.route("/home")
 def index():
-	
+
 	# View constants
 	TITLE="Geolocation-aware applications with Redis"
 	DESC="This application allows you to search for breweries that are close to specific cities."
-	
+
 	city=request.args.get("city")
 	dist=request.args.get("dist")
 
@@ -51,8 +51,7 @@ def index():
 			## Hint: The cursor-based iteration is already implemented by the client library
 			## Variable name: rs
 
-			# <Your code here!>
-			
+			rs = redis.hscan_iter("idx:city_by_name", f"{city}*", 10)
 
 			# Take the first city
 			## BTW: This might cause some unexpected results (e.g., London in the USA doesn't have breweries in the database)
@@ -62,46 +61,50 @@ def index():
 
 			# Task 2 - Retrieve the country of the city
 			## Variable name: country
-			
 
-			# <Your code here!>
-			
+			country = redis.hget(f"ct:{id}", "country")
+
 			print("DEBUG: id = {}, city = {}, country = {}".format(id, name, country))
 
 			# Task 3 - Retrieve the coordinates of the city
 			## Variable name: pos
 
-			# <Your code here!>
+			pos = redis.geopos("idx:cities", id)
 
 			# Task 4 - Find max. 10 close-by breweries
 			## Don't fetch the distance, but the id of the brewery and the coordinates only!
 			## Variable name: brewcoords
 			lng = pos[0][0]
 			lat = pos[0][1]
-			
-			# <Your code here!>
-			
+
+			brewcoords = redis.geosearch("idx:breweries", longitude=lng, latitude=lat, unit='mi', radius=dist, count=10, withcoord=True)
+
 			print("DEBUG: coordinates = {}".format(brewcoords))
 
 			# Task 5 - Retrieve brewery details
-			## Variable name: b
+			## Variable name: breweries
 			breweries = []
-			
+
 			for c in brewcoords:
 				bid = c[0]
 				bcoord = c[1]
 				blng = bcoord[0]
 				blat = bcoord[1]
-				
-				# <Your code here!>
 
+				b = redis.hgetall(f"brw:{bid}")
+				del b['_id']
+				b['lng'] = blng
+				b['lat'] = blat
+				breweries.append(b)
 
-				print("DEBUG: breweries = {}".format(breweries))			
+			print("DEBUG: breweries = {}".format(breweries))
 
 			# Render
 			return render_template('home.html', title=TITLE, desc=DESC, result=breweries,status="{} breweries found in a radius of {} miles that are close to '{}*' in the country {}".format(len(breweries),dist,city, country))
-		
-		except:
+
+		except Exception as e:
+			print(repr(e))
+
 			# No sophisticated error handling here
 			err = "Ooops! Did you search for a valid city?"
 			return render_template('home.html', title=TITLE, desc=DESC, error=err)
@@ -109,14 +112,13 @@ def index():
 		# Arguments missing
 		return render_template('home.html', title=TITLE, desc=DESC, warn="Please provide the full name or the prefix of a name of a city!")
 
-	
 
 @app.route("/db/test")
 def dbtest():
 	# View constants
 	TITLE="Test Connectivity"
 	DESC="Testing database connectivity ..."
-	
+
 	try:
 		redis.set("_app:db:test", "Database connectivity works as expected!");
 		status = redis.get("_app:db:test")
@@ -127,8 +129,8 @@ def dbtest():
 @app.route("/")
 def root():
 	return redirect("/home")
- 
-# Main    
+
+# Main
 if __name__ == "__main__":
 	app.debug = False
 	app.run(host="0.0.0.0", port=5500)

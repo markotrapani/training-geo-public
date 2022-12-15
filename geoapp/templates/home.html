@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
  	{% include 'head.html' %}
-	
+
 	<body>
 		<div class="container">
 		{% include 'header.html' %}
@@ -14,9 +14,11 @@
 				<div class="form-group">
 					<label for="distSelect">Distance</label>
 					<select class="form-control" id="distSelect" name="dist">
-						<option value="1">1 mile<option>
-						<option value="10">10 miles<option>
-						<option value="50">50 miles<option>
+						<option value="1">1 mile</option>
+						<option value="10">10 miles</option>
+						<option value="50">50 miles</option>
+            <option value="100">100 miles</option>
+            <option value="1000">1000 miles</option>
 					<select>
         		</div>
         		<button type="submit" class="btn btn-primary">Submit</button>
@@ -42,7 +44,7 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 //Inject markers
 {% for b in result %}
 L.marker([ {{b["lat"]}} , {{b["lng"]}} ]).addTo(mymap).bindPopup("<b> {{b["name"]}} </b> <br/> {{b["city"]}} ").openPopup();
-mymap.setView([ {{b["lat"]}} , {{b["lng"]}} ], 10, { animation: true });       
+mymap.setView([ {{b["lat"]}} , {{b["lng"]}} ], 10, { animation: true });
 {% endfor %}
 
 </script>
